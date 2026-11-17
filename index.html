@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestor de proyectos y tareas</title>
+<style>
+:root{--m:#5b2fd6;--a:#2563ff;--c:#22d3ee;--bg:#f3f0ff;--t:#1d1640}
+*{box-sizing:border-box}
+body{margin:0;display:flex;min-height:100vh;background:var(--bg);color:var(--t);font:15px/1.45 "Segoe UI",system-ui,sans-serif}
+aside{width:236px;flex:none;position:sticky;top:0;height:100vh;padding:24px 16px;color:#fff;display:flex;flex-direction:column;gap:8px;background:linear-gradient(165deg,var(--m),var(--a))}
+aside h1{font-size:21px;line-height:1.15;margin:0 0 14px}
+aside button{border:0;border-radius:10px;padding:10px 12px;text-align:left;font:inherit;color:#fff;background:rgba(255,255,255,.12);cursor:pointer}
+aside button.on,aside button:hover{background:#fff;color:var(--m);font-weight:600}
+aside .nuevo{background:var(--c);color:#06283d;font-weight:700;text-align:center;margin-top:10px}
+.leyenda{margin-top:auto;font-size:13px;display:grid;gap:5px}
+.leyenda i,.pri:before{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--pc);margin-right:6px}
+main{flex:1;min-width:0;padding:22px 26px}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;padding:12px;border-radius:14px;box-shadow:0 2px 14px #5b2fd61f;margin-bottom:18px}
+input,select,textarea{font:inherit;padding:8px 10px;border:1.5px solid #d8d0f7;border-radius:9px;background:#fff;color:var(--t)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #7c4dff66;border-color:var(--m)}
+.barra label{display:flex;gap:5px;align-items:center;font-size:14px}
+.card{background:#fff;border-radius:16px;margin-bottom:16px;padding:16px 18px;border-left:9px solid var(--pc);box-shadow:0 2px 14px #5b2fd61f}
+.card header{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.card h3{margin:0;font-size:19px}
+.cod{background:var(--m);color:#fff;border-radius:8px;padding:1px 9px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;margin:6px 0;color:#5d5488;font-size:14px}
+.pri{font-weight:600;font-size:13px}.est{background:#e6edff;color:var(--a);border-radius:20px;padding:2px 11px;font-size:13px;font-weight:600}
+.tag{display:inline-block;background:#efe9ff;color:var(--m);border-radius:6px;padding:0 7px;margin:2px 4px 2px 0;font-size:13px}
+.ac{margin-left:auto;display:flex;gap:6px}
+.ac button{border:0;background:#efe9ff;color:var(--m);border-radius:8px;padding:5px 10px;font:inherit;font-weight:600;cursor:pointer}
+.ac button:hover{background:var(--m);color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;display:block;overflow-x:auto}
+th{text-align:left;background:linear-gradient(90deg,var(--m),var(--a));color:#fff;padding:7px 9px;white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid #ece7ff;vertical-align:top}
+td small{display:block;color:#7a72a3}
+tr.venc td{background:#fff1f0}.venc .fv{color:#d4251f;font-weight:700}
+.vacio{text-align:center;color:#6f66a0;padding:26px}
+dialog{border:0;border-radius:18px;padding:22px;width:min(470px,94vw);box-shadow:0 12px 50px #1d164080}
+dialog::backdrop{background:#2a1a6bcc}
+dialog h2{margin:0 0 12px;color:var(--m)}
+dialog form{display:grid;gap:10px}dialog label{display:grid;gap:3px;font-weight:600;font-size:14px}
+.fila{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:#d4251f;font-weight:600;min-height:1em}
+.gb{display:flex;gap:8px;justify-content:flex-end}
+.gb button{border:0;border-radius:10px;padding:9px 18px;font:inherit;font-weight:700;cursor:pointer;background:#efe9ff;color:var(--m)}
+.gb .ok{background:linear-gradient(90deg,var(--m),var(--a));color:#fff}
+@media(max-width:760px){body{flex-direction:column}aside{position:static;width:auto;height:auto}.leyenda{display:none}main{padding:14px}}
+</style></head><body>
+<aside>
+  <h1>Gestor de proyectos y tareas</h1>
+  <button id="v-proyectos" class="on" onclick="ir('proyectos')">Proyectos</button>
+  <button id="v-tareas" onclick="ir('tareas')">Tareas</button>
+  <button id="v-venc" onclick="ir('tareas',1)">Tareas vencidas</button>
+  <button class="nuevo" onclick="form('p')">Nuevo proyecto</button>
+  <div class="leyenda"><span><i style="--pc:#1fb86b"></i>Baja</span><span><i style="--pc:#ff8a1f"></i>Media</span><span><i style="--pc:#e5322d"></i>Alta</span><span><i style="--pc:#111"></i>Máxima</span></div>
+</aside>
+<main>
+  <div class="barra">
+    <input id="f-q" type="search" placeholder="Buscar por nombre, nota o código" oninput="cargar()">
+    <select id="f-categoria" onchange="cargar()"></select>
+    <select id="f-prioridad" onchange="cargar()"></select>
+    <select id="f-estado" onchange="cargar()"></select>
+    <input id="f-etiqueta" placeholder="Etiqueta" size="10" oninput="cargar()">
+    <label><input id="f-vencidas" type="checkbox" onchange="cargar()">Solo vencidos</label>
+    <label><input id="f-desc" type="checkbox" onchange="cargar()">Orden descendente</label>
+  </div>
+  <div id="lista"></div>
+</main>
+<dialog id="dlg"></dialog>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PC={Baja:'#1fb86b',Media:'#ff8a1f',Alta:'#e5322d','Máxima':'#111'};
+let meta,D=[],vista='proyectos';
+async function api(m,u,b){
+  const r=await fetch('/api/'+u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error); return d;
+}
+const chip=p=>`<span class="pri" style="--pc:${PC[p]}">${p}</span>`;
+const tags=l=>l.map(e=>`<span class="tag">#${esc(e)}</span>`).join('');
+const opts=(l,sel)=>l.map(x=>`<option ${x==sel?'selected':''}>${esc(x)}</option>`).join('');
+const TH='<tr><th>Cód.</th><th>Tarea</th><th>Categoría</th><th>Prioridad</th><th>Finaliza</th><th>Estado</th><th>Etiquetas</th><th></th></tr>';
+
+function fila(t,pc){
+  return `<tr class="${t.vencida?'venc':''}"><td>${t.codigo}</td><td>${esc(t.nombre)}<small>${esc(t.notas)}</small></td><td>${esc(t.categoria)}</td><td>${chip(t.prioridad)}</td>
+  <td class="fv">${t.fin}${t.vencida?' (vencida)':''}</td><td>${t.estado}</td><td>${tags(t.etiquetas)}</td>
+  <td class="ac"><button onclick="form('t',${pc},${t.codigo})">Editar</button><button onclick="borrar(${pc},${t.codigo})">Eliminar</button></td></tr>`;
+}
+function proy(p){
+  return `<article class="card" style="--pc:${PC[p.prioridad]}"><header><b class="cod">${p.codigo}</b><h3>${esc(p.nombre)}</h3>${chip(p.prioridad)}<span class="est">${p.estado}</span>
+  <div class="ac"><button onclick="form('t',${p.codigo})">Nueva tarea</button><button onclick="form('p',${p.codigo})">Editar</button><button onclick="borrar(${p.codigo})">Eliminar</button></div></header>
+  <div class="meta"><span>${esc(p.categoria)}</span><span>Creado: ${p.creacion}</span><span class="${p.vencido?'venc fv':''}">Finaliza: ${p.fin}${p.vencido?' (vencido)':''}</span></div>
+  ${p.notas?`<p>${esc(p.notas)}</p>`:''}<div>${tags(p.etiquetas)}</div>
+  ${p.tareas.length?`<table>${TH}${p.tareas.map(t=>fila(t,p.codigo)).join('')}</table>`:'<p class="vacio">Este proyecto aún no tiene tareas.</p>'}</article>`;
+}
+function filtros(){
+  const q=new URLSearchParams();
+  for(const k of ['q','categoria','prioridad','estado','etiqueta']) if($('#f-'+k).value) q.set(k,$('#f-'+k).value);
+  if($('#f-vencidas').checked) q.set('vencidas',1);
+  if($('#f-desc').checked) q.set('orden','desc');
+  return q;
+}
+async function cargar(){
+  D=await api('GET',vista+'?'+filtros());
+  $('#lista').innerHTML=!D.length?'<p class="vacio">No hay resultados. Crea un proyecto o cambia los filtros.</p>'
+   :vista=='proyectos'?D.map(proy).join('')
+   :`<div class="card" style="--pc:#5b2fd6"><table>${TH.replace('<th>Tarea','<th>Proyecto</th><th>Tarea')}${D.map(t=>fila(t,t.proyecto).replace('</td><td>','</td><td>'+esc(t.proyecto_nombre)+'</td><td>')).join('')}</table></div>`;
+}
+function ir(v,venc){
+  vista=v; $('#f-vencidas').checked=!!venc;
+  $('#v-proyectos').classList.toggle('on',v=='proyectos');
+  $('#v-tareas').classList.toggle('on',v=='tareas'&&!venc);
+  $('#v-venc').classList.toggle('on',!!venc);
+  cargar().catch(e=>alert(e.message));
+}
+function hallar(pc,tc){
+  if(vista=='tareas') return D.find(t=>t.proyecto==pc&&t.codigo==tc);
+  const p=D.find(x=>x.codigo==pc); return tc?p.tareas.find(t=>t.codigo==tc):p;
+}
+function form(tipo,pc,tc){
+  const esT=tipo=='t', it=(esT?tc:pc)?hallar(pc,tc):null, padre=esT&&vista=='proyectos'?D.find(x=>x.codigo==pc):null;
+  const v=it||{codigo:'',nombre:'',categoria:padre?padre.categoria:meta.categorias[0],prioridad:'Media',estado:'Pendiente',fin:'',etiquetas:[],notas:''};
+  $('#dlg').innerHTML=`<form id="fm"><h2>${it?'Editar':'Nueva'} ${esT?'tarea':'proyecto'}</h2>
+  <div class="fila"><label>Código<input name="codigo" type="number" min="1" value="${v.codigo}" ${it?'readonly':''} placeholder="Automático"></label>
+  <label>Fecha de creación<input value="${it?it.creacion:meta.hoy}" readonly></label></div>
+  <label>Nombre<input name="nombre" required value="${esc(v.nombre)}"></label>
+  <div class="fila"><label>Categoría<select name="categoria" onchange="this.form.otra.hidden=this.value!='__otra'">${opts(meta.categorias,v.categoria)}<option value="__otra">Otra…</option></select></label>
+  <label>Prioridad<select name="prioridad">${opts(meta.prioridades,v.prioridad)}</select></label></div>
+  <input name="otra" placeholder="Nombre de la nueva categoría" hidden>
+  <div class="fila"><label>Fecha de finalización<input name="fin" type="date" required min="${it?it.creacion:meta.hoy}" value="${v.fin}"></label>
+  <label>Estado<select name="estado">${opts(meta.estados,v.estado)}</select></label></div>
+  <label>Etiquetas (separadas por coma)<input name="etiquetas" value="${esc(v.etiquetas.join(', '))}"></label>
+  <label>Notas<textarea name="notas" rows="3">${esc(v.notas)}</textarea></label>
+  <div class="err" id="err"></div>
+  <div class="gb"><button type="button" onclick="$('#dlg').close()">Cancelar</button><button class="ok">Guardar</button></div></form>`;
+  $('#fm').onsubmit=async e=>{
+    e.preventDefault();
+    const f=Object.fromEntries(new FormData(e.target)); delete f.otra;
+    if(e.target.categoria.value=='__otra') f.categoria=e.target.otra.value.trim();
+    if(f.codigo) f.codigo=+f.codigo; else delete f.codigo;
+    try{
+      const base=esT?`proyectos/${pc}/tareas`:'proyectos';
+      await (it?api('PUT',`${base}/${it.codigo}`,f):api('POST',base,f));
+      $('#dlg').close(); meta=await api('GET','meta'); llenarFiltros(); cargar();
+    }catch(x){$('#err').textContent=x.message}
+  };
+  $('#dlg').showModal();
+}
+async function borrar(pc,tc){
+  if(!confirm(tc?'¿Eliminar esta tarea?':'¿Eliminar este proyecto y todas sus tareas?')) return;
+  try{await api('DELETE',tc?`proyectos/${pc}/tareas/${tc}`:`proyectos/${pc}`); cargar();}catch(e){alert(e.message)}
+}
+function llenarFiltros(){
+  const g=(id,t,l)=>{const s=$('#f-'+id),v=s.value;s.innerHTML=`<option value="">${t}</option>`+opts(l);s.value=v};
+  g('categoria','Todas las categorías',meta.categorias); g('prioridad','Todas las prioridades',meta.prioridades); g('estado','Todos los estados',meta.estados);
+}
+(async()=>{meta=await api('GET','meta'); llenarFiltros(); cargar();})().catch(e=>$('#lista').innerHTML='<p class="vacio">No se pudo conectar. Ejecuta gestor.py y abre http://localhost:8000</p>');
+</script></body></html>
