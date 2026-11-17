@@ -49,7 +49,7 @@ dialog form{display:grid;gap:10px}dialog label{display:grid;gap:3px;font-weight:
   <button id="v-proyectos" class="on" onclick="ir('proyectos')">Proyectos</button>
   <button id="v-tareas" onclick="ir('tareas')">Tareas</button>
   <button id="v-venc" onclick="ir('tareas',1)">Tareas vencidas</button>
-  <button class="nuevo" onclick="form('p')">Nuevo proyecto</button>
+  <button class="nuevo" onclick="abrirModal('p')">Nuevo proyecto</button>
   <div class="leyenda"><span><i style="--pc:#1fb86b"></i>Baja</span><span><i style="--pc:#ff8a1f"></i>Media</span><span><i style="--pc:#e5322d"></i>Alta</span><span><i style="--pc:#111"></i>Máxima</span></div>
 </aside>
 <main>
@@ -82,11 +82,12 @@ const TH='<tr><th>Cód.</th><th>Tarea</th><th>Categoría</th><th>Prioridad</th><
 function fila(t,pc){
   return `<tr class="${t.vencida?'venc':''}"><td>${t.codigo}</td><td>${esc(t.nombre)}<small>${esc(t.notas)}</small></td><td>${esc(t.categoria)}</td><td>${chip(t.prioridad)}</td>
   <td class="fv">${t.fin}${t.vencida?' (vencida)':''}</td><td>${t.estado}</td><td>${tags(t.etiquetas)}</td>
-  <td class="ac"><button onclick="form('t',${pc},${t.codigo})">Editar</button><button onclick="borrar(${pc},${t.codigo})">Eliminar</button></td></tr>`;
+  <td class="ac"><button onclick="abrirModal('t',${pc},${t.codigo})">Editar</button><button onclick="borrar(${pc},${t.codigo})">Eliminar</button></td></tr>`;
+
 }
 function proy(p){
   return `<article class="card" style="--pc:${PC[p.prioridad]}"><header><b class="cod">${p.codigo}</b><h3>${esc(p.nombre)}</h3>${chip(p.prioridad)}<span class="est">${p.estado}</span>
-  <div class="ac"><button onclick="form('t',${p.codigo})">Nueva tarea</button><button onclick="form('p',${p.codigo})">Editar</button><button onclick="borrar(${p.codigo})">Eliminar</button></div></header>
+  <div class="ac"><button onclick="abrirModal('t',${p.codigo})">Nueva tarea</button><button onclick="abrirModal('p',${p.codigo})">Editar</button><button onclick="borrar(${p.codigo})">Eliminar</button></div></header>
   <div class="meta"><span>${esc(p.categoria)}</span><span>Creado: ${p.creacion}</span><span class="${p.vencido?'venc fv':''}">Finaliza: ${p.fin}${p.vencido?' (vencido)':''}</span></div>
   ${p.notas?`<p>${esc(p.notas)}</p>`:''}<div>${tags(p.etiquetas)}</div>
   ${p.tareas.length?`<table>${TH}${p.tareas.map(t=>fila(t,p.codigo)).join('')}</table>`:'<p class="vacio">Este proyecto aún no tiene tareas.</p>'}</article>`;
@@ -115,7 +116,7 @@ function hallar(pc,tc){
   if(vista=='tareas') return D.find(t=>t.proyecto==pc&&t.codigo==tc);
   const p=D.find(x=>x.codigo==pc); return tc?p.tareas.find(t=>t.codigo==tc):p;
 }
-function form(tipo,pc,tc){
+function abrirModal(tipo,pc,tc){
   const esT=tipo=='t', it=(esT?tc:pc)?hallar(pc,tc):null, padre=esT&&vista=='proyectos'?D.find(x=>x.codigo==pc):null;
   const v=it||{codigo:'',nombre:'',categoria:padre?padre.categoria:meta.categorias[0],prioridad:'Media',estado:'Pendiente',fin:'',etiquetas:[],notas:''};
   $('#dlg').innerHTML=`<form id="fm"><h2>${it?'Editar':'Nueva'} ${esT?'tarea':'proyecto'}</h2>
